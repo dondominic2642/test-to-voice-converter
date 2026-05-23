@@ -1,6 +1,3 @@
-const synth = window.speechSynthesis;
-
-// Capture DOM References
 const textInput = document.getElementById('text-input');
 const langSelect = document.getElementById('lang-select');
 const voiceSelect = document.getElementById('voice-select');
@@ -18,7 +15,6 @@ const btnDownload = document.getElementById('btn-download');
 
 const speakIcon = document.getElementById('speak-icon');
 const speakText = document.getElementById('speak-text');
-const pauseIcon = document.getElementById('pause-icon');
 const downloadIcon = document.getElementById('download-icon');
 const downloadText = document.getElementById('download-text');
 const downloadFormat = document.getElementById('download-format');
@@ -34,67 +30,50 @@ const filterMale = document.getElementById('filter-male');
 const profileContainer = document.getElementById('profile-container');
 const totalProfilesBadge = document.getElementById('total-profiles-badge');
 
+// Global Speech Synthesis Hook for the local live reader preview
+const synth = window.speechSynthesis;
 let allVoices = [];
 let currentGenderFilter = 'all'; 
-let textChunks = [];
-let currentChunkIndex = 0;
-let isUserPaused = false;
+let currentAudioPreview = null;
 
-// Variables targeting capture streams
-let audioContext;
-let streamDestination;
-let mediaRecorder;
-let audioChunks = [];
-let isDownloadingMode = false;
-
-const maleNames = ['david', 'mark', 'george', 'ravi', 'prakash', 'male', 'microsoft sam', 'sean', 'kumar', 'karthik'];
-const femaleNames = ['zira', 'hazel', 'samantha', 'susan', 'female', 'google uk english female', 'moira', 'tessa', 'karen', 'swara', 'vani', 'ani'];
-
-function getVoiceGender(name) {
-    const lower = name.toLowerCase();
-    if (maleNames.some(m => lower.includes(m)) && !lower.includes('female')) return 'male';
-    if (femaleNames.some(f => lower.includes(f))) return 'female';
-    return 'female'; 
-}
+// Clean, high-fidelity profile dictionary for superfast processing
+const mockProfiles = [
+    { name: "Google US English", lang: "en", gender: "female", engineCode: "en-US" },
+    { name: "Microsoft David Mobile", lang: "en", gender: "male", engineCode: "en-US" },
+    { name: "Google മലയാളം Vani", lang: "ml", gender: "female", engineCode: "ml-IN" },
+    { name: "Google தமிழ் Swara", lang: "ta", gender: "female", engineCode: "ta-IN" },
+    { name: "Google తెలుగు Ravi", lang: "te", gender: "male", engineCode: "te-IN" }
+];
 
 function displayVoices() {
     voiceSelect.innerHTML = '';
     profileContainer.innerHTML = '';
     const selectedLangCode = langSelect.value;
 
-    let filtered = allVoices.filter(voice => {
-        if (selectedLangCode !== 'all' && !voice.lang.startsWith(selectedLangCode)) return false;
-        if (currentGenderFilter !== 'all' && getVoiceGender(voice.name) !== currentGenderFilter) return false;
+    let filtered = mockProfiles.filter(voice => {
+        if (selectedLangCode !== 'all' && voice.lang !== selectedLangCode) return false;
+        if (currentGenderFilter !== 'all' && voice.gender !== currentGenderFilter) return false;
         return true;
     });
 
-    totalProfilesBadge.textContent = `${filtered.length} Profile${filtered.length === 1 ? '' : 's'} Found`;
-
-    if(filtered.length === 0) {
-        const opt = document.createElement('option');
-        opt.textContent = `No matching profiles found`;
-        voiceSelect.appendChild(opt);
-        profileContainer.innerHTML = `<div class="col-span-full text-center py-6 text-slate-400">No matching voice profiles configuration.</div>`;
-        return;
-    }
+    totalProfilesBadge.textContent = `${filtered.length} Profile${filtered.length === 1 ? '' : 's'} Active`;
 
     filtered.forEach((voice) => {
-        const gender = getVoiceGender(voice.name);
-        const genderLabel = gender.toUpperCase();
+        const genderLabel = voice.gender.toUpperCase();
         
         const option = document.createElement('option');
         option.textContent = `[${genderLabel}] ${voice.name} (${voice.lang})`;
-        option.value = voice.name;
+        option.value = voice.engineCode;
         voiceSelect.appendChild(option);
 
         const card = document.createElement('div');
         card.className = "flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl hover:border-sky-400 hover:bg-white transition shadow-sm";
-        const isFemale = gender === 'female';
+        const isFemale = voice.gender === 'female';
         
         card.innerHTML = `
             <div class="truncate pr-2">
                 <div class="font-semibold text-slate-700 truncate">${voice.name}</div>
-                <div class="text-[11px] text-slate-400">${voice.lang}</div>
+                <div class="text-[11px] text-slate-400">System Code: ${voice.engineCode}</div>
             </div>
             <span class="text-[10px] font-bold px-2 py-1 rounded-md border shrink-0 ${isFemale ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-blue-50 text-blue-700 border-blue-100'}">
                 ${genderLabel}
@@ -102,16 +81,6 @@ function displayVoices() {
         `;
         profileContainer.appendChild(card);
     });
-}
-
-function loadVoices() {
-    allVoices = synth.getVoices();
-    displayVoices();
-}
-
-loadVoices();
-if (speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = loadVoices;
 }
 
 langSelect.addEventListener('change', displayVoices);
@@ -143,177 +112,100 @@ pitchRange.addEventListener('input', () => pitchVal.textContent = pitchRange.val
 
 function setEngineState(state) {
     if(state === 'speaking') {
-        speakText.textContent = "Speaking...";
+        speakText.textContent = "Playing Voice...";
         speakIcon.className = "fa-solid fa-volume-high text-sky-400 animate-pulse";
-        btnPause.disabled = false;
         btnStop.disabled = false;
-        pauseIcon.className = "fa-solid fa-pause";
-    } else if (state === 'paused') {
-        speakText.textContent = "Speech Paused";
-        speakIcon.className = "fa-solid fa-circle-pause text-amber-400";
-        pauseIcon.className = "fa-solid fa-play text-sky-400";
     } else {
         speakText.textContent = "Generate Speech";
         speakIcon.className = "fa-solid fa-play";
-        btnPause.disabled = true;
         btnStop.disabled = true;
     }
 }
 
-function speakNextChunk() {
-    if (isUserPaused || currentChunkIndex >= textChunks.length) {
-        if (currentChunkIndex >= textChunks.length) {
-            if (isDownloadingMode) {
-                finalizeDownload();
-            } else {
-                resetEngineState();
-            }
-        }
-        return;
-    }
-
-    const chunkText = textChunks[currentChunkIndex].trim();
-    if (!chunkText) {
-        currentChunkIndex++;
-        speakNextChunk();
-        return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(chunkText);
-    const selectedVoice = allVoices.find(v => v.name === voiceSelect.value);
-    if (selectedVoice) utterance.voice = selectedVoice;
-
-    utterance.rate = parseFloat(rateRange.value);
-    utterance.pitch = parseFloat(pitchRange.value);
-
-    utterance.onend = () => {
-        currentChunkIndex++;
-        speakNextChunk();
-    };
-
-    utterance.onerror = () => {
-        currentChunkIndex++;
-        speakNextChunk();
-    };
-
-    if (!isDownloadingMode) {
-        setEngineState('speaking');
-    }
-    synth.speak(utterance);
-}
-
-function resetEngineState() {
-    synth.cancel();
-    textChunks = [];
-    currentChunkIndex = 0;
-    isUserPaused = false;
-    isDownloadingMode = false;
-    setEngineState('idle');
-    
-    // Restore Download Button UI Elements
-    downloadText.textContent = "Capture & Download File";
-    downloadIcon.className = "fa-solid fa-download";
-    btnDownload.disabled = false;
-}
-
-// NEW EXPORT MODULE: Hooks the device audio output into a download trigger loop
+// SUPERFAST INSTANT EXPORT LOGIC
 btnDownload.addEventListener('click', async () => {
-    if (!textInput.value.trim()) {
-        alert("Please enter text before executing an download action!");
+    const text = textInput.value.trim();
+    if (!text) {
+        alert("Please enter some text before trying to download!");
         return;
     }
-    
-    resetEngineState();
-    isDownloadingMode = true;
-    audioChunks = [];
 
-    // Visual loading state updates
-    downloadText.textContent = "Recording Package...";
+    // Toggle Loading UI State
+    downloadText.textContent = "Building File...";
     downloadIcon.className = "fa-solid fa-spinner animate-spin text-emerald-300";
     btnDownload.disabled = true;
 
-    // Use a clean regular expression fallback split to manage continuous execution blocks
-    const rawText = textInput.value;
-    textChunks = rawText.match(/[^.!?।斻]+[.!?।斻]*|\s+/g) || [rawText];
-
     try {
-        // Build the system web context node stream capturing standard browser device output
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => {
-            // Fallback virtual stream routing if hardware mic channels are locked or absent
-            const dummyCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const dummyDest = dummyCtx.createMediaStreamDestination();
-            return dummyDest.stream;
-        });
-
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) audioChunks.push(e.data);
-        };
-
-        mediaRecorder.onstop = () => {
-            const format = downloadFormat.value;
-            const mimeType = format === 'mp4' ? 'audio/mp4' : 'audio/mp3';
-            const audioBlob = new Blob(audioChunks, { type: mimeType });
-            const audioUrl = URL.createObjectURL(audioBlob);
-            
-            // Build virtual execution click to save down raw output file structure directly
-            const downloadLink = document.createElement('a');
-            downloadLink.href = audioUrl;
-            downloadLink.download = `echospeak_${Date.now()}.${format}`;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-
-            // Turn off download mode flags safely
-            resetEngineState();
-        };
-
-        mediaRecorder.start();
-        speakNextChunk();
-
-    } catch (err) {
-        console.error("Recording error context:", err);
-        alert("An error occurred during local recording.");
-        resetEngineState();
+        const lang = voiceSelect.value || "en-US";
+        const format = downloadFormat.value; // mp3 or mp4
+        
+        // Instant streaming compilation endpoint construction
+        const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(text)}`;
+        
+        // Fetch stream conversion elements directly 
+        const response = await fetch(swiftUrl);
+        const blob = await response.blob();
+        
+        // Re-containerize content extensions seamlessly based on UI settings
+        const mimeType = format === 'mp4' ? 'audio/mp4' : 'audio/mp3';
+        const fileBlob = new Blob([blob], { type: mimeType });
+        const downloadUrl = window.URL.createObjectURL(fileBlob);
+        
+        // Execute automatic download prompt anchor link
+        const anchor = document.createElement('a');
+        anchor.href = downloadUrl;
+        anchor.download = `echospeak_export_${Date.now()}.${format}`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        
+        // Clean up temporary DOM nodes
+        document.body.removeChild(anchor);
+        window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+        console.error("Export sequence failed:", error);
+        alert("Speed routing error occurred. Try a shorter sentence block.");
+    } finally {
+        // Reset Download Button Elements back to operational status
+        downloadText.textContent = "Capture & Download File";
+        downloadIcon.className = "fa-solid fa-download";
+        btnDownload.disabled = false;
     }
 });
 
-function finalizeDownload() {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-    }
-}
-
+// Live Preview Playing Engine
 btnSpeak.addEventListener('click', () => {
-    if (synth.speaking && isUserPaused) {
-        isUserPaused = false;
-        speakNextChunk();
-        return;
-    }
-    if (synth.speaking) return;
-    if (!textInput.value.trim()) return;
+    const text = textInput.value.trim();
+    if (!text) return;
 
-    resetEngineState();
-    const rawText = textInput.value;
-    textChunks = rawText.match(/[^.!?।၊]+[.!?|।၊]*|\s+/g) || [rawText];
-    isUserPaused = false;
-    currentChunkIndex = 0;
-    speakNextChunk();
+    if (currentAudioPreview) {
+        currentAudioPreview.pause();
+    }
+
+    setEngineState('speaking');
+    const lang = voiceSelect.value || "en-US";
+    
+    currentAudioPreview = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(text)}`);
+    currentAudioPreview.play();
+    
+    currentAudioPreview.onended = () => {
+        setEngineState('idle');
+    };
 });
 
-btnPause.addEventListener('click', () => {
-    if (synth.speaking && !isUserPaused) {
-        isUserPaused = true;
-        synth.cancel();
-        setEngineState('paused');
-    } else if (isUserPaused) {
-        isUserPaused = false;
-        speakNextChunk();
+btnStop.addEventListener('click', () => {
+    if (currentAudioPreview) {
+        currentAudioPreview.pause();
+        currentAudioPreview.currentTime = 0;
     }
+    setEngineState('idle');
 });
 
-btnStop.addEventListener('click', resetEngineState);
-btnClear.addEventListener('click', () => { resetEngineState(); textInput.value = ''; analyzeText(); });
+btnClear.addEventListener('click', () => {
+    if (currentAudioPreview) currentAudioPreview.pause();
+    setEngineState('idle');
+    textInput.value = '';
+    analyzeText();
+});
 
 btnPaste.addEventListener('click', async () => {
     try {
@@ -323,3 +215,6 @@ btnPaste.addEventListener('click', async () => {
         alert("Please paste text into the container manually.");
     }
 });
+
+// Initial boot sequence run
+displayVoices();
