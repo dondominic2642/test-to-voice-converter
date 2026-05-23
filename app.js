@@ -33,6 +33,7 @@ const totalProfilesBadge = document.getElementById('total-profiles-badge');
 
 let currentGenderFilter = 'all'; 
 let currentAudioPreview = null;
+let isGlobalStopped = false;
 
 // Global Voice Map Supporting Multi-Language Profiles
 const mockProfiles = [
@@ -118,7 +119,6 @@ function splitTextIntoSafeChunks(text, maxLength = 140) {
     let i = 0;
 
     while (i < text.length) {
-        // Grab a segment up to the max safe length limit
         let endIndex = i + maxLength;
         
         if (endIndex >= text.length) {
@@ -126,13 +126,11 @@ function splitTextIntoSafeChunks(text, maxLength = 140) {
             break;
         }
 
-        // To make sure we don't break a word in half, look backward for a nearby space
         let spaceIndex = text.lastIndexOf(' ', endIndex);
         
-        // If a space is found close by, split there. If not (or if it's a space-less script), cut exactly at maxLength
         if (spaceIndex > i && spaceIndex > endIndex - 30) {
             chunks.push(text.substring(i, spaceIndex));
-            i = spaceIndex + 1; // Skip the space character itself
+            i = spaceIndex + 1; 
         } else {
             chunks.push(text.substring(i, endIndex));
             i = endIndex;
@@ -141,7 +139,10 @@ function splitTextIntoSafeChunks(text, maxLength = 140) {
     return chunks;
 }
 
-// BULLETPROOF ASYNC DOWNLOAD ENGINE
+// HELPER FUNCTION: Introduces a tiny execution pause to bypass request blocks
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+// RATE-LIMIT PROTECTED SEQUENTIAL DOWNLOAD ENGINE
 btnDownload.addEventListener('click', async () => {
     const text = textInput.value.trim();
     if (!text) {
@@ -149,33 +150,46 @@ btnDownload.addEventListener('click', async () => {
         return;
     }
 
-    downloadText.textContent = "Processing Batches...";
+    isGlobalStopped = false;
+    downloadText.textContent = "Processing (0%)...";
     downloadIcon.className = "fa-solid fa-spinner animate-spin text-emerald-300";
     btnDownload.disabled = true;
 
     try {
         const lang = voiceSelect.value || "en-US";
         const format = downloadFormat.value;
-        
-        // Generate universal safe character array packets
         const safeChunks = splitTextIntoSafeChunks(text);
+        const blobs = [];
         
-        // Map promises for parallel batch downloads
-        const fetchPromises = safeChunks.map(async (chunk) => {
-            const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
-            const response = await fetch(swiftUrl);
-            if (!response.ok) throw new Error("API streaming error encountered");
-            return response.blob();
-        });
+        // Loop sequentially through chunks to prevent triggering server blocks
+        for (let idx = 0; idx < safeChunks.length; idx++) {
+            if (isGlobalStopped) return;
+            
+            // Update percentage progress indicator in real-time
+            const progress = Math.round(((idx) / safeChunks.length) * 100);
+            downloadText.textContent = `Processing (${progress}%)...`;
 
-        const blobs = await Promise.all(fetchPromises);
+            const chunk = safeChunks[idx];
+            const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+            
+            const response = await fetch(swiftUrl);
+            if (!response.ok) {
+                throw new Error("Server throttled the request pipeline.");
+            }
+            
+            const audioDataBlob = await response.blob();
+            blobs.push(audioDataBlob);
+            
+            // Wait 120ms before requesting the next chunk to remain under the safety window
+            await delay(120);
+        }
+
+        downloadText.textContent = "Compiling Package...";
         
-        // Combine chunks into the chosen container format
         const mimeType = format === 'mp4' ? 'audio/mp4' : 'audio/mp3';
         const finalMergedBlob = new Blob(blobs, { type: mimeType });
         const downloadUrl = window.URL.createObjectURL(finalMergedBlob);
         
-        // Trigger save download window layout
         const anchor = document.createElement('a');
         anchor.href = downloadUrl;
         anchor.download = `echospeak_universal_${Date.now()}.${format}`;
@@ -186,7 +200,7 @@ btnDownload.addEventListener('click', async () => {
         window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
         console.error("Global compilation sequence error:", error);
-        alert("An error occurred during multi-batch file construction.");
+        alert("Server protection triggered. Please shorten your text block slightly or try again in a moment.");
     } finally {
         downloadText.textContent = "Capture & Download File";
         downloadIcon.className = "fa-solid fa-download";
@@ -200,6 +214,7 @@ btnSpeak.addEventListener('click', async () => {
     if (!text) return;
 
     if (currentAudioPreview) currentAudioPreview.pause();
+    isGlobalStopped = false;
 
     speakText.textContent = "Loading Audio...";
     speakIcon.className = "fa-solid fa-spinner animate-spin text-sky-400";
@@ -207,14 +222,20 @@ btnSpeak.addEventListener('click', async () => {
     try {
         const lang = voiceSelect.value || "en-US";
         const safeChunks = splitTextIntoSafeChunks(text);
+        const blobs = [];
         
-        const fetchPromises = safeChunks.map(async (chunk) => {
+        for (let idx = 0; idx < safeChunks.length; idx++) {
+            if (isGlobalStopped) return;
+            const chunk = safeChunks[idx];
             const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+            
             const response = await fetch(swiftUrl);
-            return response.blob();
-        });
+            const dataBlob = await response.blob();
+            blobs.push(dataBlob);
+            
+            await delay(120);
+        }
 
-        const blobs = await Promise.all(fetchPromises);
         const combinedBlob = new Blob(blobs, { type: 'audio/mp3' });
         const playUrl = window.URL.createObjectURL(combinedBlob);
 
@@ -238,6 +259,7 @@ btnSpeak.addEventListener('click', async () => {
 });
 
 btnStop.addEventListener('click', () => {
+    isGlobalStopped = true;
     if (currentAudioPreview) {
         currentAudioPreview.pause();
         currentAudioPreview.currentTime = 0;
@@ -245,9 +267,14 @@ btnStop.addEventListener('click', () => {
     speakText.textContent = "Generate Speech";
     speakIcon.className = "fa-solid fa-play";
     btnStop.disabled = true;
+    
+    downloadText.textContent = "Capture & Download File";
+    downloadIcon.className = "fa-solid fa-download";
+    btnDownload.disabled = false;
 });
 
 btnClear.addEventListener('click', () => {
+    isGlobalStopped = true;
     if (currentAudioPreview) currentAudioPreview.pause();
     speakText.textContent = "Generate Speech";
     speakIcon.className = "fa-solid fa-play";
@@ -265,5 +292,5 @@ btnPaste.addEventListener('click', async () => {
     }
 });
 
-// Run UI display sequence on bootup
+// Run initial display on bootup
 displayVoices();
