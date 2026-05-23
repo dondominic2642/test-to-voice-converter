@@ -268,4 +268,3 @@ btnPaste.addEventListener('click', async () => {
 
 // Run display sequence
 displayVoices();
-
