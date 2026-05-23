@@ -1,3 +1,4 @@
+/ Capture DOM References
 const textInput = document.getElementById('text-input');
 const langSelect = document.getElementById('lang-select');
 const voiceSelect = document.getElementById('voice-select');
@@ -30,13 +31,10 @@ const filterMale = document.getElementById('filter-male');
 const profileContainer = document.getElementById('profile-container');
 const totalProfilesBadge = document.getElementById('total-profiles-badge');
 
-// Global Speech Synthesis Hook for the local live reader preview
-const synth = window.speechSynthesis;
-let allVoices = [];
 let currentGenderFilter = 'all'; 
 let currentAudioPreview = null;
 
-// Clean, high-fidelity profile dictionary for superfast processing
+// High-fidelity profile dictionary
 const mockProfiles = [
     { name: "Google US English", lang: "en", gender: "female", engineCode: "en-US" },
     { name: "Microsoft David Mobile", lang: "en", gender: "male", engineCode: "en-US" },
@@ -110,86 +108,134 @@ textInput.addEventListener('input', analyzeText);
 rateRange.addEventListener('input', () => rateVal.textContent = `${rateRange.value}x`);
 pitchRange.addEventListener('input', () => pitchVal.textContent = pitchRange.value);
 
-function setEngineState(state) {
-    if(state === 'speaking') {
-        speakText.textContent = "Playing Voice...";
-        speakIcon.className = "fa-solid fa-volume-high text-sky-400 animate-pulse";
-        btnStop.disabled = false;
-    } else {
-        speakText.textContent = "Generate Speech";
-        speakIcon.className = "fa-solid fa-play";
-        btnStop.disabled = true;
+// TEXT SPLITTING LOGIC: Breaks text apart cleanly at sentence boundaries under 200 characters
+function splitTextIntoSafeChunks(text, maxLength = 180) {
+    const sentences = text.match(/[^.!?।၊]+[.!?|।၊]*|\s+/g) || [text];
+    const chunks = [];
+    let currentChunk = "";
+
+    for (let sentence of sentences) {
+        if ((currentChunk + sentence).length > maxLength) {
+            if (currentChunk.trim()) chunks.push(currentChunk.trim());
+            
+            // If a single sentence is longer than maxLength, split it by words
+            if (sentence.length > maxLength) {
+                const words = sentence.split(' ');
+                currentChunk = "";
+                for (let word of words) {
+                    if ((currentChunk + " " + word).length > maxLength) {
+                        if (currentChunk.trim()) chunks.push(currentChunk.trim());
+                        currentChunk = word;
+                    } else {
+                        currentChunk += (currentChunk ? " " : "") + word;
+                    }
+                }
+            } else {
+                currentChunk = sentence;
+            }
+        } else {
+            currentChunk += sentence;
+        }
     }
+    if (currentChunk.trim()) chunks.push(currentChunk.trim());
+    return chunks;
 }
 
-// SUPERFAST INSTANT EXPORT LOGIC
+// BULLETPROOF ASYNC DOWNLOAD ENGINE
 btnDownload.addEventListener('click', async () => {
     const text = textInput.value.trim();
     if (!text) {
-        alert("Please enter some text before trying to download!");
+        alert("Please enter text first!");
         return;
     }
 
     // Toggle Loading UI State
-    downloadText.textContent = "Building File...";
+    downloadText.textContent = "Processing Batches...";
     downloadIcon.className = "fa-solid fa-spinner animate-spin text-emerald-300";
     btnDownload.disabled = true;
 
     try {
         const lang = voiceSelect.value || "en-US";
-        const format = downloadFormat.value; // mp3 or mp4
+        const format = downloadFormat.value;
         
-        // Instant streaming compilation endpoint construction
-        const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(text)}`;
+        // Generate safe fragments
+        const safeChunks = splitTextIntoSafeChunks(text);
         
-        // Fetch stream conversion elements directly 
-        const response = await fetch(swiftUrl);
-        const blob = await response.blob();
+        // Fetch all audio fragments asynchronously in parallel (Superfast Speed)
+        const fetchPromises = safeChunks.map(async (chunk) => {
+            const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+            const response = await fetch(swiftUrl);
+            if (!response.ok) throw new Error("Network stream failure");
+            return response.blob();
+        });
+
+        const blobs = await Promise.all(fetchPromises);
         
-        // Re-containerize content extensions seamlessly based on UI settings
+        // Merge the individual sound blobs cleanly into one single download file array buffer
         const mimeType = format === 'mp4' ? 'audio/mp4' : 'audio/mp3';
-        const fileBlob = new Blob([blob], { type: mimeType });
-        const downloadUrl = window.URL.createObjectURL(fileBlob);
+        const finalMergedBlob = new Blob(blobs, { type: mimeType });
+        const downloadUrl = window.URL.createObjectURL(finalMergedBlob);
         
-        // Execute automatic download prompt anchor link
+        // Trigger save window automatically
         const anchor = document.createElement('a');
         anchor.href = downloadUrl;
-        anchor.download = `echospeak_export_${Date.now()}.${format}`;
+        anchor.download = `echospeak_unlimited_${Date.now()}.${format}`;
         document.body.appendChild(anchor);
         anchor.click();
         
-        // Clean up temporary DOM nodes
         document.body.removeChild(anchor);
         window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-        console.error("Export sequence failed:", error);
-        alert("Speed routing error occurred. Try a shorter sentence block.");
+        console.error("Batch processing error:", error);
+        alert("An error occurred while compiling your audio file. Please try again.");
     } finally {
-        // Reset Download Button Elements back to operational status
         downloadText.textContent = "Capture & Download File";
         downloadIcon.className = "fa-solid fa-download";
         btnDownload.disabled = false;
     }
 });
 
-// Live Preview Playing Engine
-btnSpeak.addEventListener('click', () => {
+// Sound play trigger loop
+btnSpeak.addEventListener('click', async () => {
     const text = textInput.value.trim();
     if (!text) return;
 
-    if (currentAudioPreview) {
-        currentAudioPreview.pause();
-    }
+    if (currentAudioPreview) currentAudioPreview.pause();
 
-    setEngineState('speaking');
-    const lang = voiceSelect.value || "en-US";
-    
-    currentAudioPreview = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(text)}`);
-    currentAudioPreview.play();
-    
-    currentAudioPreview.onended = () => {
-        setEngineState('idle');
-    };
+    speakText.textContent = "Loading Audio...";
+    speakIcon.className = "fa-solid fa-spinner animate-spin text-sky-400";
+
+    try {
+        const lang = voiceSelect.value || "en-US";
+        const safeChunks = splitTextIntoSafeChunks(text);
+        
+        const fetchPromises = safeChunks.map(async (chunk) => {
+            const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+            const response = await fetch(swiftUrl);
+            return response.blob();
+        });
+
+        const blobs = await Promise.all(fetchPromises);
+        const combinedBlob = new Blob(blobs, { type: 'audio/mp3' });
+        const playUrl = window.URL.createObjectURL(combinedBlob);
+
+        currentAudioPreview = new Audio(playUrl);
+        
+        speakText.textContent = "Playing Voice...";
+        speakIcon.className = "fa-solid fa-volume-high text-sky-400 animate-pulse";
+        btnStop.disabled = false;
+
+        currentAudioPreview.play();
+        currentAudioPreview.onended = () => {
+            speakText.textContent = "Generate Speech";
+            speakIcon.className = "fa-solid fa-play";
+            btnStop.disabled = true;
+        };
+    } catch (err) {
+        console.error("Audio generation failed:", err);
+        speakText.textContent = "Generate Speech";
+        speakIcon.className = "fa-solid fa-play";
+    }
 });
 
 btnStop.addEventListener('click', () => {
@@ -197,12 +243,16 @@ btnStop.addEventListener('click', () => {
         currentAudioPreview.pause();
         currentAudioPreview.currentTime = 0;
     }
-    setEngineState('idle');
+    speakText.textContent = "Generate Speech";
+    speakIcon.className = "fa-solid fa-play";
+    btnStop.disabled = true;
 });
 
 btnClear.addEventListener('click', () => {
     if (currentAudioPreview) currentAudioPreview.pause();
-    setEngineState('idle');
+    speakText.textContent = "Generate Speech";
+    speakIcon.className = "fa-solid fa-play";
+    btnStop.disabled = true;
     textInput.value = '';
     analyzeText();
 });
@@ -216,5 +266,6 @@ btnPaste.addEventListener('click', async () => {
     }
 });
 
-// Initial boot sequence run
+// Run display sequence
 displayVoices();
+
