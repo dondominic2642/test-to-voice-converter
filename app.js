@@ -1,4 +1,4 @@
-/ Capture DOM References
+// Capture DOM References
 const textInput = document.getElementById('text-input');
 const langSelect = document.getElementById('lang-select');
 const voiceSelect = document.getElementById('voice-select');
@@ -34,13 +34,15 @@ const totalProfilesBadge = document.getElementById('total-profiles-badge');
 let currentGenderFilter = 'all'; 
 let currentAudioPreview = null;
 
-// High-fidelity profile dictionary
+// Global Voice Map Supporting Multi-Language Profiles
 const mockProfiles = [
     { name: "Google US English", lang: "en", gender: "female", engineCode: "en-US" },
     { name: "Microsoft David Mobile", lang: "en", gender: "male", engineCode: "en-US" },
-    { name: "Google മലയാളം Vani", lang: "ml", gender: "female", engineCode: "ml-IN" },
-    { name: "Google தமிழ் Swara", lang: "ta", gender: "female", engineCode: "ta-IN" },
-    { name: "Google తెలుగు Ravi", lang: "te", gender: "male", engineCode: "te-IN" }
+    { name: "Google മലയാളം (Malayalam)", lang: "ml", gender: "female", engineCode: "ml-IN" },
+    { name: "Google தமிழ் (Tamil)", lang: "ta", gender: "female", engineCode: "ta-IN" },
+    { name: "Google తెలుగు (Telugu)", lang: "te", gender: "male", engineCode: "te-IN" },
+    { name: "Google हिन्दी (Hindi)", lang: "hi", gender: "female", engineCode: "hi-IN" },
+    { name: "Google العربية (Arabic)", lang: "ar", gender: "female", engineCode: "ar-XA" }
 ];
 
 function displayVoices() {
@@ -60,7 +62,7 @@ function displayVoices() {
         const genderLabel = voice.gender.toUpperCase();
         
         const option = document.createElement('option');
-        option.textContent = `[${genderLabel}] ${voice.name} (${voice.lang})`;
+        option.textContent = `[${genderLabel}] ${voice.name}`;
         option.value = voice.engineCode;
         voiceSelect.appendChild(option);
 
@@ -71,7 +73,7 @@ function displayVoices() {
         card.innerHTML = `
             <div class="truncate pr-2">
                 <div class="font-semibold text-slate-700 truncate">${voice.name}</div>
-                <div class="text-[11px] text-slate-400">System Code: ${voice.engineCode}</div>
+                <div class="text-[11px] text-slate-400">Language Group: ${voice.engineCode}</div>
             </div>
             <span class="text-[10px] font-bold px-2 py-1 rounded-md border shrink-0 ${isFemale ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-blue-50 text-blue-700 border-blue-100'}">
                 ${genderLabel}
@@ -108,36 +110,34 @@ textInput.addEventListener('input', analyzeText);
 rateRange.addEventListener('input', () => rateVal.textContent = `${rateRange.value}x`);
 pitchRange.addEventListener('input', () => pitchVal.textContent = pitchRange.value);
 
-// TEXT SPLITTING LOGIC: Breaks text apart cleanly at sentence boundaries under 200 characters
-function splitTextIntoSafeChunks(text, maxLength = 180) {
-    const sentences = text.match(/[^.!?।၊]+[.!?|।၊]*|\s+/g) || [text];
+// UNIVERSAL CHUNKING ALGORITHM: Safe for every language script globally
+function splitTextIntoSafeChunks(text, maxLength = 140) {
+    if (!text) return [];
+    
     const chunks = [];
-    let currentChunk = "";
+    let i = 0;
 
-    for (let sentence of sentences) {
-        if ((currentChunk + sentence).length > maxLength) {
-            if (currentChunk.trim()) chunks.push(currentChunk.trim());
-            
-            // If a single sentence is longer than maxLength, split it by words
-            if (sentence.length > maxLength) {
-                const words = sentence.split(' ');
-                currentChunk = "";
-                for (let word of words) {
-                    if ((currentChunk + " " + word).length > maxLength) {
-                        if (currentChunk.trim()) chunks.push(currentChunk.trim());
-                        currentChunk = word;
-                    } else {
-                        currentChunk += (currentChunk ? " " : "") + word;
-                    }
-                }
-            } else {
-                currentChunk = sentence;
-            }
+    while (i < text.length) {
+        // Grab a segment up to the max safe length limit
+        let endIndex = i + maxLength;
+        
+        if (endIndex >= text.length) {
+            chunks.push(text.substring(i));
+            break;
+        }
+
+        // To make sure we don't break a word in half, look backward for a nearby space
+        let spaceIndex = text.lastIndexOf(' ', endIndex);
+        
+        // If a space is found close by, split there. If not (or if it's a space-less script), cut exactly at maxLength
+        if (spaceIndex > i && spaceIndex > endIndex - 30) {
+            chunks.push(text.substring(i, spaceIndex));
+            i = spaceIndex + 1; // Skip the space character itself
         } else {
-            currentChunk += sentence;
+            chunks.push(text.substring(i, endIndex));
+            i = endIndex;
         }
     }
-    if (currentChunk.trim()) chunks.push(currentChunk.trim());
     return chunks;
 }
 
@@ -149,7 +149,6 @@ btnDownload.addEventListener('click', async () => {
         return;
     }
 
-    // Toggle Loading UI State
     downloadText.textContent = "Processing Batches...";
     downloadIcon.className = "fa-solid fa-spinner animate-spin text-emerald-300";
     btnDownload.disabled = true;
@@ -158,36 +157,36 @@ btnDownload.addEventListener('click', async () => {
         const lang = voiceSelect.value || "en-US";
         const format = downloadFormat.value;
         
-        // Generate safe fragments
+        // Generate universal safe character array packets
         const safeChunks = splitTextIntoSafeChunks(text);
         
-        // Fetch all audio fragments asynchronously in parallel (Superfast Speed)
+        // Map promises for parallel batch downloads
         const fetchPromises = safeChunks.map(async (chunk) => {
             const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
             const response = await fetch(swiftUrl);
-            if (!response.ok) throw new Error("Network stream failure");
+            if (!response.ok) throw new Error("API streaming error encountered");
             return response.blob();
         });
 
         const blobs = await Promise.all(fetchPromises);
         
-        // Merge the individual sound blobs cleanly into one single download file array buffer
+        // Combine chunks into the chosen container format
         const mimeType = format === 'mp4' ? 'audio/mp4' : 'audio/mp3';
         const finalMergedBlob = new Blob(blobs, { type: mimeType });
         const downloadUrl = window.URL.createObjectURL(finalMergedBlob);
         
-        // Trigger save window automatically
+        // Trigger save download window layout
         const anchor = document.createElement('a');
         anchor.href = downloadUrl;
-        anchor.download = `echospeak_unlimited_${Date.now()}.${format}`;
+        anchor.download = `echospeak_universal_${Date.now()}.${format}`;
         document.body.appendChild(anchor);
         anchor.click();
         
         document.body.removeChild(anchor);
         window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-        console.error("Batch processing error:", error);
-        alert("An error occurred while compiling your audio file. Please try again.");
+        console.error("Global compilation sequence error:", error);
+        alert("An error occurred during multi-batch file construction.");
     } finally {
         downloadText.textContent = "Capture & Download File";
         downloadIcon.className = "fa-solid fa-download";
@@ -195,7 +194,7 @@ btnDownload.addEventListener('click', async () => {
     }
 });
 
-// Sound play trigger loop
+// Live Preview Playing Engine
 btnSpeak.addEventListener('click', async () => {
     const text = textInput.value.trim();
     if (!text) return;
@@ -232,7 +231,7 @@ btnSpeak.addEventListener('click', async () => {
             btnStop.disabled = true;
         };
     } catch (err) {
-        console.error("Audio generation failed:", err);
+        console.error("Audio engine render crash:", err);
         speakText.textContent = "Generate Speech";
         speakIcon.className = "fa-solid fa-play";
     }
@@ -266,5 +265,5 @@ btnPaste.addEventListener('click', async () => {
     }
 });
 
-// Run display sequence
+// Run UI display sequence on bootup
 displayVoices();
