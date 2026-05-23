@@ -4,75 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EchoSpeak Pro - Bug-Free Unlimited TTS</title>
-    <!-- Tailwind CSS for sleek styling -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for attractive, user-friendly icons -->
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: '#0f172a',      
-                        skyBrand: '#38bdf8',  
-                        iceBlue: '#f0f9ff'    
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        input[type="range"]::-webkit-slider-thumb {
-            background: #38bdf8;
-            cursor: pointer;
-        }
-    </style>
+    <!-- Custom Style Sheet linking -->
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-ice-blue min-h-screen font-sans text-slate-800 flex flex-col">
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col">
 
-    <!-- Header / Navigation -->
+    <!-- Header -->
     <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
         <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-blue-600 to-skyBrand p-2.5 rounded-xl text-white shadow-md shadow-sky-200">
+                <div class="bg-gradient-to-tr from-blue-600 to-sky-400 p-2.5 rounded-xl text-white shadow-md shadow-sky-200">
                     <i class="fa-solid fa-volume-high text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-navy tracking-tight">Echo<span class="text-skyBrand">Speak</span></h1>
-                    <p class="text-xs text-slate-400 font-medium">Chunk-Stabilized Engine • 100% Free</p>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Echo<span class="text-sky-500">Speak</span></h1>
+                    <p class="text-xs text-slate-400 font-medium">Chunk-Stabilized Engine • GitHub Ready</p>
                 </div>
             </div>
             <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Safe Architecture Active
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Production Build
             </span>
         </div>
     </header>
 
-    <!-- Main Content Grid -->
+    <!-- Main Workspace -->
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
-        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Workspace Left Side (Input and Metrics) -->
+            
+            <!-- Left Side: Input Box -->
             <div class="md:col-span-2 flex flex-col space-y-4">
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col flex-grow relative">
                     <div class="flex justify-between items-center mb-3">
-                        <label for="text-input" class="text-sm font-semibold text-navy flex items-center gap-2">
-                            <i class="fa-solid fa-pen-to-square text-skyBrand"></i> Paste text in any language
+                        <label for="text-input" class="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-sky-500"></i> Paste text in any language
                         </label>
                         <button id="btn-paste" class="text-xs font-medium text-blue-600 hover:text-blue-800 transition flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-md">
                             <i class="fa-regular fa-clipboard"></i> Quick Paste
                         </button>
                     </div>
 
-                    <!-- Textarea -->
-                    <textarea id="text-input" placeholder="Type or paste text here... Supports English, മലയാളം, தமிழ், or తెలుగు text. Large essays or books will split safely and speak continuously without freezing up!" 
-                        class="w-full flex-grow min-h-[300px] md:min-h-[380px] p-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-skyBrand focus:border-transparent resize-none text-slate-700 leading-relaxed transition"></textarea>
+                    <textarea id="text-input" placeholder="Type or paste text here... Supports English, മലയാളം, தமிழ், or తెలుగు text. Works smoothly on hosted servers without cutting off." 
+                        class="w-full flex-grow min-h-[300px] md:min-h-[380px] p-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent resize-none text-slate-700 leading-relaxed transition"></textarea>
                     
-                    <!-- Metrics Bar -->
                     <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-4 text-xs font-medium text-slate-500">
-                        <div class="flex items-center gap-1"><i class="fa-solid fa-calculator"></i> Characters: <span id="char-count" class="text-navy font-bold">0</span></div>
-                        <div class="flex items-center gap-1"><i class="fa-solid fa-font"></i> Words: <span id="word-count" class="text-navy font-bold">0</span></div>
-                        <div class="flex items-center gap-1"><i class="fa-solid fa-clock"></i> Est. Time: <span id="read-time" class="text-navy font-bold">0m 0s</span></div>
+                        <div class="flex items-center gap-1"><i class="fa-solid fa-calculator"></i> Characters: <span id="char-count" class="text-slate-900 font-bold">0</span></div>
+                        <div class="flex items-center gap-1"><i class="fa-solid fa-font"></i> Words: <span id="word-count" class="text-slate-900 font-bold">0</span></div>
+                        <div class="flex items-center gap-1"><i class="fa-solid fa-clock"></i> Est. Time: <span id="read-time" class="text-slate-900 font-bold">0m 0s</span></div>
                         <button id="btn-clear" class="ml-auto text-rose-500 hover:text-rose-700 transition flex items-center gap-1">
                             <i class="fa-solid fa-trash-can"></i> Clear Text
                         </button>
@@ -80,93 +61,76 @@
                 </div>
             </div>
 
-            <!-- Toolbar Right Side (Voice Settings & Master Controls) -->
+            <!-- Right Side: Controls -->
             <div class="space-y-6">
-                <!-- Settings Card -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5">
-                    <h3 class="text-sm font-bold text-navy uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-sliders text-skyBrand"></i> Voice Configuration
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-sky-500"></i> Voice Configuration
                     </h3>
 
-                    <!-- Language Selection Filter -->
+                    <!-- Language Select -->
                     <div class="space-y-1.5">
                         <label for="lang-select" class="text-xs font-semibold text-slate-600">Step 1: Choose Language</label>
                         <div class="relative">
-                            <select id="lang-select" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl px-3 py-2.5 appearance-none focus:outline-none focus:ring-2 focus:ring-skyBrand text-slate-700 font-bold cursor-pointer">
+                            <select id="lang-select" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl px-3 py-2.5 appearance-none focus:outline-none focus:ring-2 focus:ring-sky-400 text-slate-700 font-bold cursor-pointer">
                                 <option value="en" selected>English</option>
                                 <option value="ml">Malayalam (മലയാളം)</option>
                                 <option value="ta">Tamil (தமிழ்)</option>
                                 <option value="te">Telugu (తెలుగు)</option>
                                 <option value="all">Show All System Languages</option>
                             </select>
-                            <i class="fa-solid fa-language absolute right-3.5 top-3 text-slate-400 pointer-events-none text-base"></i>
+                            <i class="fa-solid fa-language absolute right-3.5 top-3.5 text-slate-400 pointer-events-none text-base"></i>
                         </div>
                     </div>
 
-                    <!-- Gender Selection Segment -->
+                    <!-- Gender Filter Toggle -->
                     <div class="space-y-2">
                         <label class="text-xs font-semibold text-slate-600">Step 2: Filter Voice Gender</label>
                         <div class="grid grid-cols-3 gap-2">
-                            <button id="filter-all" class="py-2 text-xs font-bold rounded-xl border border-blue-200 bg-blue-50 text-blue-600 transition">
-                                All
-                            </button>
-                            <button id="filter-female" class="py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-venus text-pink-400"></i> Female
-                            </button>
-                            <button id="filter-male" class="py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-mars text-blue-400"></i> Male
-                            </button>
+                            <button id="filter-all" class="py-2 text-xs font-bold rounded-xl border border-blue-200 bg-blue-50 text-blue-600 transition">All</button>
+                            <button id="filter-female" class="py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition flex items-center justify-center gap-1"><i class="fa-solid fa-venus text-pink-400"></i> Female</button>
+                            <button id="filter-male" class="py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition flex items-center justify-center gap-1"><i class="fa-solid fa-mars text-blue-400"></i> Male</button>
                         </div>
                     </div>
 
-                    <!-- Voice Selection Dropdown -->
+                    <!-- Voice Select -->
                     <div class="space-y-1.5">
                         <label for="voice-select" class="text-xs font-semibold text-slate-600">Step 3: Select Speaker Profile</label>
                         <div class="relative">
-                            <select id="voice-select" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl px-3 py-2.5 appearance-none focus:outline-none focus:ring-2 focus:ring-skyBrand text-slate-700 font-medium cursor-pointer">
-                                <!-- Populated dynamically via JS -->
-                            </select>
+                            <select id="voice-select" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl px-3 py-2.5 appearance-none focus:outline-none focus:ring-2 focus:ring-sky-400 text-slate-700 font-medium cursor-pointer"></select>
                             <i class="fa-solid fa-chevron-down absolute right-3.5 top-3.5 text-slate-400 pointer-events-none text-xs"></i>
                         </div>
                     </div>
 
-                    <!-- Speed Control -->
+                    <!-- Speed & Pitch Sliders -->
                     <div class="space-y-1.5">
                         <div class="flex justify-between items-center text-xs">
                             <label for="rate-range" class="font-semibold text-slate-600">Speed (Pace)</label>
                             <span id="rate-val" class="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-[11px]">1.0x</span>
                         </div>
-                        <input type="range" id="rate-range" min="0.5" max="2" step="0.1" value="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-skyBrand">
+                        <input type="range" id="rate-range" min="0.5" max="2" step="0.1" value="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-sky-400">
                     </div>
 
-                    <!-- Pitch Control -->
                     <div class="space-y-1.5">
                         <div class="flex justify-between items-center text-xs">
                             <label for="pitch-range" class="font-semibold text-slate-600">Pitch (Tone)</label>
                             <span id="pitch-val" class="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-[11px]">1.0</span>
                         </div>
-                        <input type="range" id="pitch-range" min="0.5" max="1.5" step="0.1" value="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-skyBrand">
+                        <input type="range" id="pitch-range" min="0.5" max="1.5" step="0.1" value="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-sky-400">
                     </div>
                 </div>
 
-                <!-- Action Engine Controls -->
-                <div class="bg-gradient-to-b from-navy to-slate-900 rounded-2xl p-6 shadow-md text-white space-y-4">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-skyBrand flex items-center gap-2">
-                        <i class="fa-solid fa-circle-play"></i> Execution Panel
-                    </h3>
-
-                    <!-- Core Trigger Button -->
-                    <button id="btn-speak" class="w-full bg-gradient-to-r from-skyBrand to-blue-500 hover:brightness-110 active:scale-[0.99] text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-sky-500/20 transition flex items-center justify-center space-x-3 text-lg group">
+                <!-- Playback Panel -->
+                <div class="bg-slate-900 rounded-2xl p-6 shadow-md text-white space-y-4">
+                    <button id="btn-speak" class="w-full bg-gradient-to-r from-sky-400 to-blue-500 hover:brightness-110 active:scale-[0.99] text-white font-bold py-4 px-6 rounded-xl shadow-lg transition flex items-center justify-center space-x-3 text-lg">
                         <i id="speak-icon" class="fa-solid fa-play"></i>
                         <span id="speak-text">Generate Speech</span>
                     </button>
-
-                    <!-- Subordinate Controls (Pause/Stop) -->
                     <div class="grid grid-cols-2 gap-3">
-                        <button id="btn-pause" disabled class="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-slate-700/50">
+                        <button id="btn-pause" disabled class="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-slate-700/50">
                             <i id="pause-icon" class="fa-solid fa-pause"></i> Pause
-                    </button>
-                        <button id="btn-stop" disabled class="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-slate-700/50">
+                        </button>
+                        <button id="btn-stop" disabled class="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-slate-700/50">
                             <i class="fa-solid fa-stop"></i> Stop
                         </button>
                     </div>
@@ -174,296 +138,23 @@
             </div>
         </div>
 
-        <!-- Real-Time Speaker Profile Monitor Dashboard -->
+        <!-- Available System Voices Display Area -->
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                <h3 class="text-sm font-bold text-navy flex items-center gap-2">
-                    <i class="fa-solid fa-address-book text-skyBrand"></i> Active Speaker Profiles on Your Device
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-address-book text-sky-500"></i> Active Device Profiles
                 </h3>
-                <span id="total-profiles-badge" class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-md">
-                    0 Voices Found
-                </span>
+                <span id="total-profiles-badge" class="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-md">0 Voices Found</span>
             </div>
-            
-            <div id="profile-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[220px] overflow-y-auto pr-2 text-sm">
-                <!-- Rendered Dynamically -->
-            </div>
+            <div id="profile-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[220px] overflow-y-auto pr-2 text-sm"></div>
         </div>
-
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-100 py-4 text-center text-xs text-slate-400 font-medium">
-        &copy; 2026 EchoSpeak Pro. All Local Client System Processing.
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 font-medium">
+        &copy; 2026 EchoSpeak Pro. Hosted Securely via Git-Workflow.
     </footer>
 
-    <!-- Logic Engine Script -->
-    <script>
-        const synth = window.speechSynthesis;
-
-        // UI Target Hooks
-        const textInput = document.getElementById('text-input');
-        const langSelect = document.getElementById('lang-select');
-        const voiceSelect = document.getElementById('voice-select');
-        const rateRange = document.getElementById('rate-range');
-        const rateVal = document.getElementById('rate-val');
-        const pitchRange = document.getElementById('pitch-range');
-        const pitchVal = document.getElementById('pitch-val');
-        
-        const btnSpeak = document.getElementById('btn-speak');
-        const btnPause = document.getElementById('btn-pause');
-        const btnStop = document.getElementById('btn-stop');
-        const btnClear = document.getElementById('btn-clear');
-        const btnPaste = document.getElementById('btn-paste');
-
-        const speakIcon = document.getElementById('speak-icon');
-        const speakText = document.getElementById('speak-text');
-        const pauseIcon = document.getElementById('pause-icon');
-
-        const charCount = document.getElementById('char-count');
-        const wordCount = document.getElementById('word-count');
-        const readTime = document.getElementById('read-time');
-
-        const filterAll = document.getElementById('filter-all');
-        const filterFemale = document.getElementById('filter-female');
-        const filterMale = document.getElementById('filter-male');
-        
-        const profileContainer = document.getElementById('profile-container');
-        const totalProfilesBadge = document.getElementById('total-profiles-badge');
-
-        let allVoices = [];
-        let currentGenderFilter = 'all'; 
-
-        // Storage tracking states for consecutive text block execution arrays
-        let textChunks = [];
-        let currentChunkIndex = 0;
-        let isUserPaused = false;
-
-        const maleNames = ['david', 'mark', 'george', 'ravi', 'prakash', 'male', 'microsoft sam', 'sean', 'kumar', 'karthik'];
-        const femaleNames = ['zira', 'hazel', 'samantha', 'susan', 'female', 'google uk english female', 'moira', 'tessa', 'karen', 'swara', 'vani', 'ani'];
-
-        function getVoiceGender(name) {
-            const lower = name.toLowerCase();
-            if (maleNames.some(m => lower.includes(m)) && !lower.includes('female')) return 'male';
-            if (femaleNames.some(f => lower.includes(f))) return 'female';
-            return 'female'; 
-        }
-
-        function displayVoices() {
-            voiceSelect.innerHTML = '';
-            profileContainer.innerHTML = '';
-            const selectedLangCode = langSelect.value;
-
-            let filtered = allVoices.filter(voice => {
-                if (selectedLangCode !== 'all' && !voice.lang.startsWith(selectedLangCode)) return false;
-                if (currentGenderFilter !== 'all' && getVoiceGender(voice.name) !== currentGenderFilter) return false;
-                return true;
-            });
-
-            totalProfilesBadge.textContent = `${filtered.length} Profile${filtered.length === 1 ? '' : 's'} Found`;
-
-            if(filtered.length === 0) {
-                const opt = document.createElement('option');
-                opt.textContent = `No profiles found for this configuration`;
-                voiceSelect.appendChild(opt);
-                
-                profileContainer.innerHTML = `
-                    <div class="col-span-full text-center py-6 text-slate-400 font-medium bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        <i class="fa-solid fa-circle-exclamation text-base mb-1 block"></i>
-                        No matching profiles found on your device for this filter combo.
-                    </div>`;
-                return;
-            }
-
-            filtered.forEach((voice) => {
-                const gender = getVoiceGender(voice.name);
-                const genderLabel = gender.toUpperCase();
-                
-                const option = document.createElement('option');
-                option.textContent = `[${genderLabel}] ${voice.name} (${voice.lang})`;
-                option.value = voice.name;
-                voiceSelect.appendChild(option);
-
-                const card = document.createElement('div');
-                card.className = "flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl hover:border-skyBrand hover:bg-white transition shadow-sm";
-                
-                const isFemale = gender === 'female';
-                const genderBadgeColor = isFemale ? 'bg-pink-50 text-pink-700 border-pink-100' : 'bg-blue-50 text-blue-700 border-blue-100';
-                const genderIcon = isFemale ? 'fa-venus' : 'fa-mars';
-
-                card.innerHTML = `
-                    <div class="truncate pr-2">
-                        <div class="font-semibold text-slate-700 truncate">${voice.name}</div>
-                        <div class="text-[11px] text-slate-400 font-medium">${voice.lang}</div>
-                    </div>
-                    <span class="text-[10px] font-bold px-2 py-1 rounded-md border shrink-0 flex items-center gap-1 ${genderBadgeColor}">
-                        <i class="fa-solid ${genderIcon}"></i> ${genderLabel}
-                    </span>
-                `;
-                profileContainer.appendChild(card);
-            });
-        }
-
-        function loadVoices() {
-            allVoices = synth.getVoices();
-            displayVoices();
-        }
-
-        loadVoices();
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = loadVoices;
-        }
-
-        langSelect.addEventListener('change', displayVoices);
-
-        function updateTabUI(activeButton) {
-            [filterAll, filterFemale, filterMale].forEach(btn => {
-                btn.className = "py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition flex items-center justify-center gap-1";
-            });
-            activeButton.className = "py-2 text-xs font-bold rounded-xl border border-blue-200 bg-blue-50 text-blue-600 transition flex items-center justify-center gap-1";
-        }
-
-        filterAll.addEventListener('click', () => { currentGenderFilter = 'all'; updateTabUI(filterAll); displayVoices(); });
-        filterFemale.addEventListener('click', () => { currentGenderFilter = 'female'; updateTabUI(filterFemale); displayVoices(); });
-        filterMale.addEventListener('click', () => { currentGenderFilter = 'male'; updateTabUI(filterMale); displayVoices(); });
-
-        function analyzeText() {
-            const text = textInput.value;
-            charCount.textContent = text.length.toLocaleString();
-            const cleanText = text.trim().replace(/\s+/g, ' ');
-            const words = cleanText === "" ? 0 : cleanText.split(' ').length;
-            wordCount.textContent = words.toLocaleString();
-            const totalSeconds = Math.ceil((words / 150) * 60);
-            readTime.textContent = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
-        }
-        function analyzeText() {
-            const text = textInput.value;
-            charCount.textContent = text.length.toLocaleString();
-            const cleanText = text.trim().replace(/\s+/g, ' ');
-            const words = cleanText === "" ? 0 : cleanText.split(' ').length;
-            wordCount.textContent = words.toLocaleString();
-            const totalSeconds = Math.ceil((words / 150) * 60);
-            readTime.textContent = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
-        }
-
-        textInput.addEventListener('input', analyzeText);
-        rateRange.addEventListener('input', () => rateVal.textContent = `${rateRange.value}x`);
-        pitchRange.addEventListener('input', () => pitchVal.textContent = pitchRange.value);
-
-        function setEngineState(state) {
-            if(state === 'speaking') {
-                speakText.textContent = "Speaking...";
-                speakIcon.className = "fa-solid fa-volume-high text-skyBrand animate-pulse";
-                btnPause.disabled = false;
-                btnStop.disabled = false;
-                pauseIcon.className = "fa-solid fa-pause";
-            } else if (state === 'paused') {
-                speakText.textContent = "Speech Paused";
-                speakIcon.className = "fa-solid fa-circle-pause text-amber-400";
-                pauseIcon.className = "fa-solid fa-play text-skyBrand";
-            } else {
-                speakText.textContent = "Generate Speech";
-                speakIcon.className = "fa-solid fa-play";
-                btnPause.disabled = true;
-                btnStop.disabled = true;
-            }
-        }
-
-        // SECTOR FIX: Sequential Queue Processing System
-        function speakNextChunk() {
-            if (isUserPaused || currentChunkIndex >= textChunks.length) {
-                if (currentChunkIndex >= textChunks.length) {
-                    resetEngineState();
-                }
-                return;
-            }
-
-            const chunkText = textChunks[currentChunkIndex].trim();
-            
-            // Skip empty whitespace elements seamlessly
-            if (!chunkText) {
-                currentChunkIndex++;
-                speakNextChunk();
-                return;
-            }
-
-            const utterance = new SpeechSynthesisUtterance(chunkText);
-            const selectedVoice = allVoices.find(v => v.name === voiceSelect.value);
-            if (selectedVoice) utterance.voice = selectedVoice;
-
-            utterance.rate = parseFloat(rateRange.value);
-            utterance.pitch = parseFloat(pitchRange.value);
-
-            // Sequential triggering links
-            utterance.onend = () => {
-                currentChunkIndex++;
-                speakNextChunk();
-            };
-
-            utterance.onerror = (event) => {
-                console.error("SpeechSynthesisUtterance error:", event);
-                // Advance past unexpected failed characters or markers smoothly
-                currentChunkIndex++;
-                speakNextChunk();
-            };
-
-            setEngineState('speaking');
-            synth.speak(utterance);
-        }
-
-        function resetEngineState() {
-            synth.cancel();
-            textChunks = [];
-            currentChunkIndex = 0;
-            isUserPaused = false;
-            setEngineState('idle');
-        }
-
-        // Event Trigger Handlers
-        btnSpeak.addEventListener('click', () => {
-            if (synth.speaking && isUserPaused) {
-                // Resume execution block sequence loop
-                isUserPaused = false;
-                speakNextChunk();
-                return;
-            }
-
-            if (synth.speaking) return; // Prevent overlapping play threads
-            if (!textInput.value.trim()) { alert("Please input target text statement patterns first!"); return; }
-
-            resetEngineState();
-
-            // Smart regex breakdown keeping delimiters for natural syntax pacing
-            const rawText = textInput.value;
-            textChunks = rawText.match(/[^.!?।၊]+[.!?|।၊]*|\s+/g) || [rawText];
-            
-            isUserPaused = false;
-            currentChunkIndex = 0;
-            speakNextChunk();
-        });
-
-        btnPause.addEventListener('click', () => {
-            if (synth.speaking && !isUserPaused) {
-                isUserPaused = true;
-                synth.cancel(); // Clear hardware engine thread immediately
-                setEngineState('paused');
-            } else if (isUserPaused) {
-                isUserPaused = false;
-                speakNextChunk();
-            }
-        });
-
-        btnStop.addEventListener('click', resetEngineState);
-        btnClear.addEventListener('click', () => { resetEngineState(); textInput.value = ''; analyzeText(); });
-        
-        btnPaste.addEventListener('click', async () => {
-            try {
-                textInput.value += await navigator.clipboard.readText();
-                analyzeText();
-            } catch (err) {
-                alert("Please paste text layout into target text container elements manually.");
-            }
-        });
-    </script>
+    <!-- App Logic Script Injection -->
+    <script src="app.js"></script>
 </body>
 </html>
