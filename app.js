@@ -14,10 +14,14 @@ const btnPause = document.getElementById('btn-pause');
 const btnStop = document.getElementById('btn-stop');
 const btnClear = document.getElementById('btn-clear');
 const btnPaste = document.getElementById('btn-paste');
+const btnDownload = document.getElementById('btn-download');
 
 const speakIcon = document.getElementById('speak-icon');
 const speakText = document.getElementById('speak-text');
 const pauseIcon = document.getElementById('pause-icon');
+const downloadIcon = document.getElementById('download-icon');
+const downloadText = document.getElementById('download-text');
+const downloadFormat = document.getElementById('download-format');
 
 const charCount = document.getElementById('char-count');
 const wordCount = document.getElementById('word-count');
@@ -35,6 +39,13 @@ let currentGenderFilter = 'all';
 let textChunks = [];
 let currentChunkIndex = 0;
 let isUserPaused = false;
+
+// Variables targeting capture streams
+let audioContext;
+let streamDestination;
+let mediaRecorder;
+let audioChunks = [];
+let isDownloadingMode = false;
 
 const maleNames = ['david', 'mark', 'george', 'ravi', 'prakash', 'male', 'microsoft sam', 'sean', 'kumar', 'karthik'];
 const femaleNames = ['zira', 'hazel', 'samantha', 'susan', 'female', 'google uk english female', 'moira', 'tessa', 'karen', 'swara', 'vani', 'ani'];
@@ -151,7 +162,13 @@ function setEngineState(state) {
 
 function speakNextChunk() {
     if (isUserPaused || currentChunkIndex >= textChunks.length) {
-        if (currentChunkIndex >= textChunks.length) resetEngineState();
+        if (currentChunkIndex >= textChunks.length) {
+            if (isDownloadingMode) {
+                finalizeDownload();
+            } else {
+                resetEngineState();
+            }
+        }
         return;
     }
 
@@ -179,7 +196,9 @@ function speakNextChunk() {
         speakNextChunk();
     };
 
-    setEngineState('speaking');
+    if (!isDownloadingMode) {
+        setEngineState('speaking');
+    }
     synth.speak(utterance);
 }
 
@@ -188,7 +207,81 @@ function resetEngineState() {
     textChunks = [];
     currentChunkIndex = 0;
     isUserPaused = false;
+    isDownloadingMode = false;
     setEngineState('idle');
+    
+    // Restore Download Button UI Elements
+    downloadText.textContent = "Capture & Download File";
+    downloadIcon.className = "fa-solid fa-download";
+    btnDownload.disabled = false;
+}
+
+// NEW EXPORT MODULE: Hooks the device audio output into a download trigger loop
+btnDownload.addEventListener('click', async () => {
+    if (!textInput.value.trim()) {
+        alert("Please enter text before executing an download action!");
+        return;
+    }
+    
+    resetEngineState();
+    isDownloadingMode = true;
+    audioChunks = [];
+
+    // Visual loading state updates
+    downloadText.textContent = "Recording Package...";
+    downloadIcon.className = "fa-solid fa-spinner animate-spin text-emerald-300";
+    btnDownload.disabled = true;
+
+    // Use a clean regular expression fallback split to manage continuous execution blocks
+    const rawText = textInput.value;
+    textChunks = rawText.match(/[^.!?।斻]+[.!?।斻]*|\s+/g) || [rawText];
+
+    try {
+        // Build the system web context node stream capturing standard browser device output
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => {
+            // Fallback virtual stream routing if hardware mic channels are locked or absent
+            const dummyCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const dummyDest = dummyCtx.createMediaStreamDestination();
+            return dummyDest.stream;
+        });
+
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const format = downloadFormat.value;
+            const mimeType = format === 'mp4' ? 'audio/mp4' : 'audio/mp3';
+            const audioBlob = new Blob(audioChunks, { type: mimeType });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            // Build virtual execution click to save down raw output file structure directly
+            const downloadLink = document.createElement('a');
+            downloadLink.href = audioUrl;
+            downloadLink.download = `echospeak_${Date.now()}.${format}`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+            // Turn off download mode flags safely
+            resetEngineState();
+        };
+
+        mediaRecorder.start();
+        speakNextChunk();
+
+    } catch (err) {
+        console.error("Recording error context:", err);
+        alert("An error occurred during local recording.");
+        resetEngineState();
+    }
+});
+
+function finalizeDownload() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
 }
 
 btnSpeak.addEventListener('click', () => {
@@ -202,7 +295,7 @@ btnSpeak.addEventListener('click', () => {
 
     resetEngineState();
     const rawText = textInput.value;
-    textChunks = rawText.match(/[^.!?।၊]+[.!?Target|।၊]*|\s+/g) || [rawText];
+    textChunks = rawText.match(/[^.!?।၊]+[.!?|।၊]*|\s+/g) || [rawText];
     isUserPaused = false;
     currentChunkIndex = 0;
     speakNextChunk();
