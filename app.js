@@ -111,8 +111,8 @@ textInput.addEventListener('input', analyzeText);
 rateRange.addEventListener('input', () => rateVal.textContent = `${rateRange.value}x`);
 pitchRange.addEventListener('input', () => pitchVal.textContent = pitchRange.value);
 
-// UNIVERSAL CHUNKING ALGORITHM: Safe for every language script globally
-function splitTextIntoSafeChunks(text, maxLength = 140) {
+// UNIVERSAL CHUNKING ALGORITHM: Cuts any script safely into blocks under the character limit
+function splitTextIntoSafeChunks(text, maxLength = 130) {
     if (!text) return [];
     
     const chunks = [];
@@ -139,10 +139,26 @@ function splitTextIntoSafeChunks(text, maxLength = 140) {
     return chunks;
 }
 
-// HELPER FUNCTION: Introduces a tiny execution pause to bypass request blocks
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// RATE-LIMIT PROTECTED SEQUENTIAL DOWNLOAD ENGINE
+// ADAPTIVE FETCH WITH RETRY LOGIC: Shields the app against server rate limits
+async function fetchAudioWithRetry(url, retries = 4, delayMs = 300) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url);
+            if (response.status === 429 || !response.ok) { // 429 status means "Too Many Requests"
+                throw new Error(`Throttled or invalid status: ${response.status}`);
+            }
+            return await response.blob();
+        } catch (err) {
+            if (i === retries - 1) throw err;
+            // Back off exponentially before attempting to request the segment again
+            await delay(delayMs * Math.pow(2, i)); 
+        }
+    }
+}
+
+// ADAPTIVE SEQUENTIAL DOWNLOAD ENGINE
 btnDownload.addEventListener('click', async () => {
     const text = textInput.value.trim();
     if (!text) {
@@ -161,27 +177,21 @@ btnDownload.addEventListener('click', async () => {
         const safeChunks = splitTextIntoSafeChunks(text);
         const blobs = [];
         
-        // Loop sequentially through chunks to prevent triggering server blocks
         for (let idx = 0; idx < safeChunks.length; idx++) {
             if (isGlobalStopped) return;
             
-            // Update percentage progress indicator in real-time
-            const progress = Math.round(((idx) / safeChunks.length) * 100);
+            const progress = Math.round((idx / safeChunks.length) * 100);
             downloadText.textContent = `Processing (${progress}%)...`;
 
             const chunk = safeChunks[idx];
             const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
             
-            const response = await fetch(swiftUrl);
-            if (!response.ok) {
-                throw new Error("Server throttled the request pipeline.");
-            }
-            
-            const audioDataBlob = await response.blob();
+            // Execute chunk download using the adaptive retry handler
+            const audioDataBlob = await fetchAudioWithRetry(swiftUrl);
             blobs.push(audioDataBlob);
             
-            // Wait 120ms before requesting the next chunk to remain under the safety window
-            await delay(120);
+            // Standard light breathing delay between normal requests
+            await delay(150);
         }
 
         downloadText.textContent = "Compiling Package...";
@@ -200,7 +210,7 @@ btnDownload.addEventListener('click', async () => {
         window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
         console.error("Global compilation sequence error:", error);
-        alert("Server protection triggered. Please shorten your text block slightly or try again in a moment.");
+        alert("The server is currently heavily loaded. Please wait a moment and try downloading again.");
     } finally {
         downloadText.textContent = "Capture & Download File";
         downloadIcon.className = "fa-solid fa-download";
@@ -229,11 +239,10 @@ btnSpeak.addEventListener('click', async () => {
             const chunk = safeChunks[idx];
             const swiftUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
             
-            const response = await fetch(swiftUrl);
-            const dataBlob = await response.blob();
+            const dataBlob = await fetchAudioWithRetry(swiftUrl);
             blobs.push(dataBlob);
             
-            await delay(120);
+            await delay(150);
         }
 
         const combinedBlob = new Blob(blobs, { type: 'audio/mp3' });
